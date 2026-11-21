@@ -10,6 +10,8 @@
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 
 const botDir = process.env.MAKEFUN_BOT_DIR ?? ".";
 const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
@@ -50,3 +52,33 @@ mkdirSync(outputDir, { recursive: true });
 const target = join(outputDir, "POST.json");
 copyFileSync(postFile, target);
 console.log(`main.ts: copied ${postFile} -> ${target} (${post.url})`);
+
+// Beside the copied POST.json, leave a small manifest in the output
+// directory so anyone checking the hand-in can confirm, without opening
+// the post, exactly which image and caption the entry consists of.
+const memeFile = join(botDir, "meme.png");
+const captionFile = join(botDir, "post.txt");
+for (const needed of [memeFile, captionFile]) {
+  if (!existsSync(needed)) {
+    console.error(`main.ts: entry file missing: ${needed}`);
+    process.exit(1);
+  }
+}
+
+const memeDigest = createHash("sha256")
+  .update(readFileSync(memeFile))
+  .digest("hex");
+const captionText = readFileSync(captionFile, "utf8").trim();
+
+const manifest = {
+  post_url: post.url,
+  meme_file: "meme.png",
+  meme_sha256: memeDigest,
+  caption_chars: captionText.length,
+};
+const manifestTarget = join(outputDir, "entry.json");
+writeFileSync(manifestTarget, JSON.stringify(manifest, null, 2) + "\n");
+console.log(
+  `main.ts: wrote ${manifestTarget} (sha256 ${memeDigest.slice(0, 12)}…, ` +
+    `caption ${captionText.length} chars)`,
+);
