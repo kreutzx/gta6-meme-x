@@ -2,6 +2,8 @@
 // (gta6-meme-x-01). The X post itself is the entry; this program's whole
 // job is to hand the post's address to the grader by copying the
 // repository's POST.json into the output directory, untouched.
+// The current entry is the Leonida Rentals return-receipt meme —
+// see make_receipt.py (which draws it) and post.txt (its caption).
 //
 // Run it the way the kit describes:
 //   mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -47,4 +49,4 @@ if (!postUrlPattern.test(bareUrl)) {
 mkdirSync(outputDir, { recursive: true });
 const target = join(outputDir, "POST.json");
 copyFileSync(postFile, target);
-console.log(`main.ts: copied ${postFile} -> ${target}`);
+console.log(`main.ts: copied ${postFile} -> ${target} (${post.url})`);
